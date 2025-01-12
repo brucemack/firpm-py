@@ -92,7 +92,7 @@ def gee(k: int, n: int, x: Vector, y: Vector, ad: Vector, grid: Vector):
 #   THE COEFFICIENTS OF THE BEST APPROXIMATION.
 #-----------------------------------------------------------------------
 
-def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: Vector):
+def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: Vector, alpha: Vector):
     itrmax = int(25)
     devl = -1.0
     nz = int(nfcns + 1)
@@ -101,7 +101,6 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
     x = Vector(66)
     y = Vector(66)
     ad = Vector(66) 
-    alpha = Vector(66) 
     comp = 0
     ynz = 0
     a = Vector(65) 
@@ -528,6 +527,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
 
     alpha.set(1, alpha.get(1) / cn )
 
+    # Or else line 545
     if not kkk == 1: 
         p.set(1, 2.0 * alpha.get(nfcns) * bb + alpha.get(nm1))
         p.set(2, 2.0 * aa * alpha.get(nfcns))
@@ -572,43 +572,11 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
             for j in CLOSED_RANGE(1, nfcns):
                 alpha.set(j, p.get(j))
             
-            # LINE 545
-            if not nfcns > 3:
-                alpha.set(nfcns + 1, 0.0)
-                alpha.set(nfcns + 2, 0.0)
-
-
-
-
-
-
-
-        # Line 410 
-        while True:
-
-
-
-
-            if not (xe - xt) < fsh:
-                l = l + 1 
-
-
-
-
-
-
-
-        # Line 300
-
-
-
-
-
-    # LINE 400
-
-
-
-
+    # LINE 545
+    if not nfcns > 3:
+        alpha.set(nfcns + 1, 0.0)
+        alpha.set(nfcns + 2, 0.0)
+    return 
 
 def firpm(nfilt: int, jtype, nbands: int, edge: Vector, fx: Vector, wtx: Vector, lgrid = 16):
     """
@@ -676,6 +644,8 @@ def firpm(nfilt: int, jtype, nbands: int, edge: Vector, fx: Vector, wtx: Vector,
     des = Vector(1045)
     wt = Vector(1045)
     iext = Vector(1045)
+    h = Vector(66)
+    alpha = Vector(66)
 
     # This is the iteration across the bands.  The index "l"
     # points to the current band.
@@ -754,13 +724,59 @@ def firpm(nfilt: int, jtype, nbands: int, edge: Vector, fx: Vector, wtx: Vector,
 
     # INITIAL GUESS FOR THE EXTREMAL FREQUENCIES--EQUALLY
     # SPACED ALONG THE GRID
+    # LINE 200
     temp = float(ngrid - 1) / float(nfcns)
-    for j in range(1, nfcns + 1):
+    for j in CLOSED_RANGE(1, nfcns):
         xt = j - 1
         iext.set(j, xt * temp + 1.0)
     iext.set(nfcns + 1, ngrid)
     nm1 = nfcns - 1
     nz = nfcns + 1
+
+    # Call the big function
+    remez(ngrid, nfcns, grid, des, wt, iext, alpha)
+
+    # Implement equations (9) - (12) 
+
+    if neg == 0:
+        # Line 300
+        if not nodd == 0: 
+            # DO LOOP 305
+            for j in CLOSED_RANGE(1, nm1):
+                nzmj = nz - j
+                h.set(j, 0.5 * alpha.get(nzmj))
+            h.set(nfcns, alpha.get(1))
+        else:
+            # Line 310
+            h.set(1, 0.25 * alpha.get(nfcns))
+            # DO LOOP 315
+            for j in CLOSED_RANGE(2, nm1):
+                nzmj = nz - j
+                nf2j = nfcns + 2 - j
+                h.set(j, 0.25 * (alpha.get(nzmj) + alpha(nf2j)))
+            h.set(nfcns, 0.5 * alpha.get(1) + 0.25 * alpha.get(2))
+    # Line 320
+    else:
+        if not nodd == 0:
+            h.set(1, 0.25 * alpha.get(nfcns))
+            h.set(2, 0.25 * alpha.get(nm1))
+            # DO LOOP 325
+            for j in CLOSED_RANGE(3, nm1):
+                nzmj = nz - j
+                nf3j = nfcns + 3 - j
+                h.set(j, 0.25 * (alpha.get(nzmj) - alpha.get(nf3j)))
+            h.set(nfcns, 0.5 * alpha.get(1) - 0.25 * alpha.get(3))
+            h.set(nz, 0)            
+        else:
+            # Line 330
+            h.set(1, 0.25 * alpha.get(nfcns))
+            # DO LOOP 335
+            for j in CLOSED_RANGE(2, nm1):
+                nzmj = nz - j
+                nf2j = nfcns + 2 - j
+                h.set(j, 0.25 * (alpha.get(nzmj) - alpha.get(nf2j)))
+            h.set(nfcns, 0.5 * alpha.get(1) - 0.25 * alpha.get(2))         
+
 
     #print("ngrid", ngrid)
     #grid.dump()
