@@ -1,6 +1,18 @@
 """
-A helpful refernce: https://michaelgellis.tripod.com/dsp/pgm21.html
+This file contains a Python translation of the FORTRAN code contained in the 
+famous 1973 article entitled "A Computer Program for Designing Linear
+Phase Digital Filters" by McClellan, Parks, and Rabiner.  
 
+A PDF copy of the paper is here: https://web.ece.ucsb.edu/Faculty/Rabiner/ece259/Reprints/062_computer%20program.pdf
+James McClellan's original Master's thesis from Rice Uiversity is here: https://repository.rice.edu/server/api/core/bitstreams/a924e584-8512-4852-9801-c602985dc0da/content
+A helpful reference to the FORTRAN code is here: https://michaelgellis.tripod.com/dsp/pgm21.html
+
+I have tried to keep things as similar to the original FORTRAN as possible
+in order to simplify the translation process and to maintain a strong 
+cross-reference to the original paper. Therefore, this will not 
+necessarily look like "good" Python code.
+
+Bruce MacKinnon
 """
 import math
 
@@ -46,12 +58,29 @@ class IntVector(Vector):
             raise Exception("Invalid type")
         Vector.set(self, n, value)
 
+# -----------------------------------------------------------------------
+# FUNCTION: EFF
+#   FUNCTION TO CALCULATE THE DESIRED MAGNITUDE RESPONSE
+#   AS A FUNCTION OF FREQUENCY.
+#   AN ARBITRARY FUNCTION OF FREQUENCY CAN BE
+#   APPROXIMATED IF THE USER REPLACES THIS FUNCTION
+#   WITH THE APPROPRIATE CODE TO EVALUATE THE IDEAL
+#   MAGNITUDE.  NOTE THAT THE PARAMETER FREQ IS THE
+#   VALUE OF NORMALIZED FREQUENCY NEEDED FOR EVALUATION.
+# -----------------------------------------------------------------------
 def eff(freq, fx: Vector, wtx: Vector, lband, jtype):
     if jtype == 2:
         return fx.get(lband) * freq
     else:
         return fx.get(lband)
 
+# -----------------------------------------------------------------------
+# FUNCTION: WATE
+#   FUNCTION TO CALCULATE THE WEIGHT FUNCTION AS A FUNCTION
+#   OF FREQUENCY.  SIMILAR TO THE FUNCTION EFF, THIS FUNCTION CAN
+#   BE REPLACED BY A USER-WRITTEN ROUTINE TO CALCULATE ANY
+#   DESIRED WEIGHTING FUNCTION.
+# -----------------------------------------------------------------------
 def wate(freq, fx: Vector, wtx: Vector, lband, jtype):
     if jtype == 2:
         if fx.get(lband) < 0.0001:
@@ -61,11 +90,11 @@ def wate(freq, fx: Vector, wtx: Vector, lband, jtype):
     else:
         return wtx.get(lband)
 
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 # FUNCTION: D
 #   FUNCTION TO CALCULATE THE LAGRANGE INTERPOLATION
 #   COEFFICIENTS FOR USE IN THE FUNCTION GEE.
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 def d(k: int, n: int, m: int, x: Vector):
     d = 1.0
     q = x.get(k)
@@ -76,11 +105,11 @@ def d(k: int, n: int, m: int, x: Vector):
     d = 1.0 / d    
     return d
 
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 # FUNCTION: GEE
 #   FUNCTION TO EVALUATE THE FREQUENCY RESPONSE USING THE
 #   LAGRANGE INTERPOLATION FORMULA IN THE BARYCENTRIC FORM
-#-----------------------------------------------------------------------
+# -----------------------------------------------------------------------
 def gee(k: int, n: int, x: Vector, y: Vector, ad: Vector, grid: Vector):
     p = 0.0
     xf = grid.get(k) 
@@ -106,7 +135,6 @@ def gee(k: int, n: int, x: Vector, y: Vector, ad: Vector, grid: Vector):
 #   FREQUENCIES (POINTS OF MAXIMUM ERROR) AND THEN CALCULATES
 #   THE COEFFICIENTS OF THE BEST APPROXIMATION.
 #-----------------------------------------------------------------------
-
 def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: Vector, alpha: Vector):
     
     itrmax = int(25)
@@ -192,6 +220,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
         # is the most straight-forward way I can think of to 
         # replicate the logic without a major re-structuring.
 
+        # Starting point
         GOTO_LINE = 200
 
         while True:
@@ -601,7 +630,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
 
     return dev
 
-def firpm(nfilt: int, jtype: int, nbands: int, edges: list, gains: list, weights: list, lgrid = 16):
+def design(nfilt: int, jtype: int, nbands: int, edges: list, gains: list, weights: list, lgrid = 16):
     """
 
     General Notes:
