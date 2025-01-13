@@ -25,7 +25,7 @@ PI2 = 2.0 * PI
 def CLOSED_RANGE(x, y):
     return range(x, y + 1)
 
-# A 1-based vector to make things easier when porting from Fortran 77
+# A 1-based vector to make things easier when porting from FORTRAN 77
 class Vector:
     def __init__(self, dim: int = 0):
         self.dim = dim
@@ -99,6 +99,7 @@ def d(k: int, n: int, m: int, x: Vector):
     d = 1.0
     q = x.get(k)
     for l in CLOSED_RANGE(1, m):
+        # Step size is m
         for j in range(l, n + 1, m):
             if j - k != 0:
                 d = 2.0 * d * (q - x.get(j))
@@ -174,6 +175,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
         # DO LOOP 120
         for j in CLOSED_RANGE(1, nz):
             ad.set(j, d(j, nz, jet, x))
+
         dnum = 0.0
         dden = 0.0
         k = int(1)

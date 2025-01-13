@@ -1,3 +1,11 @@
+Overview
+========
+
+A literal translation of the Parks McClellan algorithm for FIR filter
+design from the original FORTRAN to pure Python. This was done to 
+provide a basis for further implementation work in Python and other
+languages.
+
 References
 ==========
 
