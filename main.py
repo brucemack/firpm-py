@@ -14,9 +14,9 @@ class Vector:
     def __init__(self, dim, fill:list = None):
         self.dim = dim
         self.data = [None] * dim
-        if not fill is None:
+        if not fill is None:            
             for i in range(0, self.dim):
-                self.data[i] = fill[i]
+                self.set(i + 1, fill[i])
     def check_index(self, n):
         if n < 1 or n > self.dim:
             raise Exception("Vector index out of bounds")
@@ -30,6 +30,14 @@ class Vector:
         for i in range(0, self.dim):
             if not self.data[i] is None:
                 print(i+1, self.data[i])
+
+class IntVector(Vector):
+    def __init__(self, dim, fill:list = None):
+        Vector.__init__(self, dim, fill)
+    def set(self, n, value):
+        if not isinstance(value, int):
+            raise Exception("Invalid type")
+        Vector.set(self, n, value)
 
 def eff(freq, fx: Vector, wtx: Vector, lband, jtype):
     if jtype == 2:
@@ -106,6 +114,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
     a = Vector(65) 
     p = Vector(65) 
     q = Vector(65) 
+    k = int(0)
 
     # Main iteration loop
     # LINE 100 
@@ -124,20 +133,21 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
             dtemp = math.cos(dtemp * PI2)
             x.set(j, dtemp)
         
-        jet = (nfcns - 1) / 15 + 1
+        # FORTRAN variables that start with J are implicitly integers
+        jet = int((nfcns - 1) / 15 + 1)
         # DO LOOP 120
         for j in CLOSED_RANGE(1, nz):
             ad.set(j, d(j, nz, jet, x))
         dnum = 0.0
         dden = 0.0
-        k = 1 
+        k = int(1)
         for j in CLOSED_RANGE(1, nz):
             l = iext.get(j)
             dtemp = ad.get(j) * des.get(l)
             dnum = dnum + dtemp 
             dtemp = float(k) * ad.get(j) / wt.get(l)
             dden = dden + dtemp
-            k = -k 
+            k = int(-k)
         
         dev = dnum / dden 
         nu = 1
@@ -163,7 +173,8 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
         knz = iext.get(nz) 
         klow = 0
         nut = -nu
-        j = 1 
+        j = int(1)
+        l = int(0)
 
         # SEARCH FOR THE EXTREMAL FREQUENCIES OF THE BEST
         # APPROXIMATION
@@ -181,7 +192,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
 
                 if j == nzz:
                     ynz = comp 
-                if j > nzz:
+                if j >= nzz:
                     GOTO_LINE = 300
                     continue            
                 kup = iext.get(j + 1)
@@ -191,7 +202,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
                     y1 = comp 
                 comp = dev 
 
-                if l > kup:
+                if l >= kup:
                     GOTO_LINE = 220
                     continue
 
@@ -207,7 +218,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
 
             elif GOTO_LINE == 210:
                 l = l + 1 
-                if l > kup:
+                if l >= kup:
                     GOTO_LINE = 215
                     continue
                 err = gee(l, nz, x, y, ad, grid)
@@ -235,7 +246,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
 
             elif GOTO_LINE == 225:
                 l = l - 1
-                if l < klow:
+                if l <= klow:
                     GOTO_LINE = 250
                     continue 
                 err = gee(l, nz, x, y, ad, grid)
@@ -244,7 +255,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
                 if dtemp > 0.0:
                     GOTO_LINE = 230
                     continue 
-                if jchnge < 0.0:
+                if jchnge <= 0.0:
                     GOTO_LINE = 225
                     continue
                 GOTO_LINE = 260
@@ -257,13 +268,13 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
 
             elif GOTO_LINE == 235:
                 l = l - 1 
-                if l < klow:
+                if l <= klow:
                     GOTO_LINE = 240
                     continue 
                 err = gee(l, nz, x, y, ad, grid)
                 err = (err - des.get(l)) * wt.get(l)
                 dtemp = float(nut) * err - comp 
-                if dtemp < 0.0:
+                if dtemp <= 0.0:
                     GOTO_LINE = 240
                     continue 
                 comp = float(nut) * err 
@@ -272,7 +283,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
 
             elif GOTO_LINE == 240:
                 klow = iext.get(j)
-                iext.get(j, l + 1)
+                iext.set(j, l + 1)
                 j = j + 1
                 jchnge = jchnge + 1
                 GOTO_LINE = 200
@@ -288,13 +299,13 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
 
             elif GOTO_LINE == 255:
                 l = l + 1 
-                if l > kup:
+                if l >= kup:
                     GOTO_LINE = 260
                     continue 
                 err = gee(l, nz, x, y, ad, grid)
                 err = (err - des.get(l)) * wt.get(l)
                 dtemp = float(nut) * err - comp 
-                if dtemp < 0.0:
+                if dtemp <= 0.0:
                     GOTO_LINE = 255
                     continue 
                 comp = float(nut) * err 
@@ -326,13 +337,13 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
 
             elif GOTO_LINE == 310:
                 l = l + 1
-                if l > kup:
+                if l >= kup:
                     GOTO_LINE = 315
                     continue 
                 err = gee(l, nz, x, y, ad, grid)
                 err = (err - des.get(l)) * wt.get(l)
                 dtemp = float(nut) * err - comp 
-                if dtemp < 0.0:
+                if dtemp <= 0.0:
                     GOTO_LINE = 310
                     continue 
                 comp = float(nut) * err 
@@ -365,13 +376,13 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
 
             elif GOTO_LINE == 330:
                 l = l - 1 
-                if l < klow:
+                if l <= klow:
                     GOTO_LINE = 340
                     continue 
                 err = gee(l, nz, x, y, ad, grid)
                 err = (err - des.get(l)) * wt.get(l)
                 dtemp = float(nut) * err - comp 
-                if dtemp < 0.0:
+                if dtemp <= 0.0:
                     GOTO_LINE = 330
                     continue 
                 j = nzz 
@@ -439,7 +450,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
     kkk = 0
     if grid.get(1) < 0.01 and grid.get(ngrid) > 0.49:
         kkk = 1
-    if nfcns < 3:
+    if nfcns <= 3:
         kkk = 1 
     if not kkk == 1:
         dtemp = math.cos(PI2 * grid.get(1))
@@ -525,9 +536,10 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
     for j in CLOSED_RANGE(2, nfcns):
         alpha.set(j, 2.0 * alpha.get(j) / cn)
 
+    # Close to line 550
     alpha.set(1, alpha.get(1) / cn )
 
-    # Or else line 545
+    # Or else jump to line 545
     if not kkk == 1: 
         p.set(1, 2.0 * alpha.get(nfcns) * bb + alpha.get(nm1))
         p.set(2, 2.0 * aa * alpha.get(nfcns))
@@ -535,6 +547,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
 
         # DO LOOP 540 
         for j in CLOSED_RANGE(2, nm1):
+
             if not j < nm1:
                 aa = 0.5 * aa 
                 bb = 0.5 * bb 
@@ -565,12 +578,13 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
                     q.set(k, -a.get(k))
                 
                 nf1j = nfcns - 1 - j
+
                 q.set(1, q.get(1) + alpha.get(nf1j))
 
-            # Line 540
-            # DO LOOP 543
-            for j in CLOSED_RANGE(1, nfcns):
-                alpha.set(j, p.get(j))
+        # Line 540
+        # DO LOOP 543
+        for j in CLOSED_RANGE(1, nfcns):
+            alpha.set(j, p.get(j))
             
     # LINE 545
     if not nfcns > 3:
@@ -578,7 +592,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
         alpha.set(nfcns + 2, 0.0)
     return 
 
-def firpm(nfilt: int, jtype, nbands: int, edge: Vector, fx: Vector, wtx: Vector, lgrid = 16):
+def firpm(nfilt: int, jtype: int, nbands: int, edge: Vector, fx: Vector, wtx: Vector, lgrid = 16):
     """
 
     General Notes:
@@ -600,13 +614,13 @@ def firpm(nfilt: int, jtype, nbands: int, edge: Vector, fx: Vector, wtx: Vector,
     nfmax:int = int(128)
 
     # Validation
-    if not (nfilt < nfmax and nfilt > 3):
+    if not (nfilt <= nfmax and nfilt >= 3):
         raise Exception("Invalid nfilt specified")
 
     # LINE 115
     jb = 2 * nbands
     # LINE 120
-    if not (jtype > 0 and jtype < 3):
+    if not (jtype > 0 and jtype <= 3):
         raise Exception("Invalid jtype specified")
     # LINE 125
     neg = int(1)
@@ -643,7 +657,7 @@ def firpm(nfilt: int, jtype, nbands: int, edge: Vector, fx: Vector, wtx: Vector,
     # TODO: Size appropriately
     des = Vector(1045)
     wt = Vector(1045)
-    iext = Vector(1045)
+    iext = IntVector(1045)
     h = Vector(66)
     alpha = Vector(66)
 
@@ -728,7 +742,9 @@ def firpm(nfilt: int, jtype, nbands: int, edge: Vector, fx: Vector, wtx: Vector,
     temp = float(ngrid - 1) / float(nfcns)
     for j in CLOSED_RANGE(1, nfcns):
         xt = j - 1
-        iext.set(j, xt * temp + 1.0)
+        # TODO: Need to review whether the conversion to integer
+        # is correct here.
+        iext.set(j, int(xt * temp + 1.0))
     iext.set(nfcns + 1, ngrid)
     nm1 = nfcns - 1
     nz = nfcns + 1
@@ -777,12 +793,9 @@ def firpm(nfilt: int, jtype, nbands: int, edge: Vector, fx: Vector, wtx: Vector,
                 h.set(j, 0.25 * (alpha.get(nzmj) - alpha.get(nf2j)))
             h.set(nfcns, 0.5 * alpha.get(1) - 0.25 * alpha.get(2))         
 
+    h.dump()
 
-    #print("ngrid", ngrid)
-    #grid.dump()
-    des.dump()
-    wt.dump()
 
 # TEST
-firpm(11, 2, 1, Vector(2, [ 0.05, 0.5 ]), Vector(1, [ 1.0 ]), Vector(1, [ 1.0 ]))
+firpm(20, 3, 1, Vector(2, [ 0.05, 0.5 ]), Vector(1, [ 1.0 ]), Vector(1, [ 1.0 ]))
 
