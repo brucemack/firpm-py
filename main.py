@@ -1,3 +1,7 @@
+"""
+A helpful refernce: https://michaelgellis.tripod.com/dsp/pgm21.html
+
+"""
 import math
 
 PI = 4.0 * math.atan(1.0)
@@ -101,6 +105,7 @@ def gee(k: int, n: int, x: Vector, y: Vector, ad: Vector, grid: Vector):
 #-----------------------------------------------------------------------
 
 def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: Vector, alpha: Vector):
+    
     itrmax = int(25)
     devl = -1.0
     nz = int(nfcns + 1)
@@ -590,7 +595,8 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
     if not nfcns > 3:
         alpha.set(nfcns + 1, 0.0)
         alpha.set(nfcns + 2, 0.0)
-    return 
+    
+    return dev
 
 def firpm(nfilt: int, jtype: int, nbands: int, edge: Vector, fx: Vector, wtx: Vector, lgrid = 16):
     """
@@ -609,6 +615,10 @@ def firpm(nfilt: int, jtype: int, nbands: int, edge: Vector, fx: Vector, wtx: Ve
         fx: Response per band.  One entry per band.
         wtx: Weight per band.  One entry per band.
         lgrid: The grid density used for estimation.
+
+    Returns:
+        The impulse response (list of nfilt coefficients)
+        The deviation achieved
     """
 
     nfmax:int = int(128)
@@ -658,7 +668,7 @@ def firpm(nfilt: int, jtype: int, nbands: int, edge: Vector, fx: Vector, wtx: Ve
     des = Vector(1045)
     wt = Vector(1045)
     iext = IntVector(1045)
-    h = Vector(66)
+    h = Vector(nfilt)
     alpha = Vector(66)
 
     # This is the iteration across the bands.  The index "l"
@@ -750,7 +760,7 @@ def firpm(nfilt: int, jtype: int, nbands: int, edge: Vector, fx: Vector, wtx: Ve
     nz = nfcns + 1
 
     # Call the big function
-    remez(ngrid, nfcns, grid, des, wt, iext, alpha)
+    dev = remez(ngrid, nfcns, grid, des, wt, iext, alpha)
 
     # Implement equations (9) - (12) 
 
@@ -793,9 +803,17 @@ def firpm(nfilt: int, jtype: int, nbands: int, edge: Vector, fx: Vector, wtx: Ve
                 h.set(j, 0.25 * (alpha.get(nzmj) - alpha.get(nf2j)))
             h.set(nfcns, 0.5 * alpha.get(1) - 0.25 * alpha.get(2))         
 
-    h.dump()
+    return h, dev
 
+# Hilbert n=20 test from original paper
+print("Hilbert")
+h, dev = firpm(20, 3, 1, Vector(2, [ 0.05, 0.5 ]), Vector(1, [ 1.0 ]), Vector(1, [ 1.0 ]))
+h.dump()
+print("Dev", dev)
 
-# TEST
-firpm(20, 3, 1, Vector(2, [ 0.05, 0.5 ]), Vector(1, [ 1.0 ]), Vector(1, [ 1.0 ]))
+print("Low Pass Filter")
+h, dev = firpm(24, 1, 2, Vector(4, [ 0.05, 0.08, 0.16, 0.5 ]), Vector(2, [ 1.0, 0.0 ]), Vector(2, [ 1.0, 1.0 ]))
+h.dump()
+print("Dev", dev)
+
 
