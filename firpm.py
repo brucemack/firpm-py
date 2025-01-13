@@ -136,22 +136,23 @@ def gee(k: int, n: int, x: Vector, y: Vector, ad: Vector, grid: Vector):
 #   FREQUENCIES (POINTS OF MAXIMUM ERROR) AND THEN CALCULATES
 #   THE COEFFICIENTS OF THE BEST APPROXIMATION.
 #-----------------------------------------------------------------------
-def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: Vector, alpha: Vector):
+def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: Vector):
     
     itrmax = int(25)
     devl = -1.0
     nz = int(nfcns + 1)
     nzz = int(nfcns + 2)
     niter = int(0)
-    x = Vector(66)
+    x = Vector(nzz)
     y = Vector(66)
-    ad = Vector(66) 
+    ad = Vector(nz) 
     comp = 0
     ynz = 0
     a = Vector(65) 
     p = Vector(65) 
     q = Vector(65) 
     k = int(0)
+    alpha = Vector(66)
 
     # Main iteration loop
     # LINE 100 
@@ -164,6 +165,9 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
         if niter > itrmax: 
             break
         
+        # This appears to be a performance optimization.  Builds
+        # an array of the value of the cosine basis functions
+        # sampled at the currently-assumed extremal frequencies.
         for j in CLOSED_RANGE(1, nz):
             jxt = iext.get(j) 
             dtemp = grid.get(jxt) 
@@ -179,14 +183,15 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
         dnum = 0.0
         dden = 0.0
         k = int(1)
+
         for j in CLOSED_RANGE(1, nz):
             l = iext.get(j)
             dtemp = ad.get(j) * des.get(l)
             dnum = dnum + dtemp 
             dtemp = float(k) * ad.get(j) / wt.get(l)
             dden = dden + dtemp
-            k = int(-k)
-        
+            k = int(-k)        
+
         dev = dnum / dden 
         nu = 1
         if dev > 0.0: 
@@ -218,7 +223,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
         # APPROXIMATION
 
         # NOTE: We are using this strange logic structure because
-        # of the heavy use of GOTOs in the original code. This
+        # of the heavy use of GOTOs in the original FORTRAN code. This
         # is the most straight-forward way I can think of to 
         # replicate the logic without a major re-structuring.
 
@@ -630,7 +635,8 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
         alpha.set(nfcns + 1, 0.0)
         alpha.set(nfcns + 2, 0.0)
 
-    return dev
+    # TODO: BUILD THE FINAL G(F) FOR RETURN
+    return dev, alpha
 
 def design(nfilt: int, jtype: int, nbands: int, edges: list, gains: list, weights: list, lgrid = 16):
     """
@@ -710,7 +716,6 @@ def design(nfilt: int, jtype: int, nbands: int, edges: list, gains: list, weight
     wt = Vector(1045)
     iext = IntVector(1045)
     h = Vector(nfilt)
-    alpha = Vector(66)
 
     # This is the iteration across the bands.  The index "l"
     # points to the current band.
@@ -801,7 +806,7 @@ def design(nfilt: int, jtype: int, nbands: int, edges: list, gains: list, weight
     nz = nfcns + 1
 
     # Call the big function
-    dev = remez(ngrid, nfcns, grid, des, wt, iext, alpha)
+    dev, alpha = remez(ngrid, nfcns, grid, des, wt, iext)
 
     # Implement equations (9) - (12) 
 
