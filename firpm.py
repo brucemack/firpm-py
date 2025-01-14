@@ -49,7 +49,18 @@ class Vector:
         for i in range(0, self.dim):
             if not self.data[i] is None:
                 print(i+1, self.data[i])
-
+    def as_list(self):
+        """
+        result = []
+        for e in self.data:
+            # Stop at the first empty element
+            if e is None:
+                break
+            result.append(e)
+        return result
+        """
+        return self.data 
+    
 class IntVector(Vector):
     def __init__(self, dim):
         Vector.__init__(self, dim)
@@ -112,6 +123,16 @@ def d(k: int, n: int, m: int, x: Vector):
 #   LAGRANGE INTERPOLATION FORMULA IN THE BARYCENTRIC FORM
 # -----------------------------------------------------------------------
 def gee(k: int, n: int, x: Vector, y: Vector, ad: Vector, grid: Vector):
+    """
+    Parameters:
+        k: Index into the frequency grid to be used for the evaluation.
+        n: The number of basis functions being evaluated.
+        x: The abscissa vector.  Allows a grid frequency index k to be converted 
+           to cos(2 PI F[k])
+        y: UNKNOWN
+        ad: UNKNOWN
+        grid: The grid itself
+    """
     p = 0.0
     xf = grid.get(k) 
     xf = math.cos(PI2 * xf)
@@ -511,7 +532,6 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
         if not kkk == 1: 
             xt = (xt - bb) / aa 
             xt1 = math.sqrt(1.0 - xt * xt)
-            # TODO: CHECK CALLING CONVENTION ON THIS
             ft = math.atan2(xt1, xt) / PI2
 
         # There is another set of complicated GOTOs in the original code
@@ -696,8 +716,10 @@ def design(nfilt: int, jtype: int, nbands: int, edges: list, gains: list, weight
     if nodd == 1 and neg == 0: 
         nfcns = nfcns + 1
 
-    # Setup the dense grid
+    # Setup the dense grid of frequencies.
     grid = Vector((nfilt + 1) * int(lgrid / 2))
+    des = Vector((nfilt + 1) * int(lgrid / 2))
+    wt = Vector((nfilt + 1) * int(lgrid / 2))
     # Start off the grid at the lower-boundary of the first band
     grid.set(1, edge.get(1))
     # delf is the delta in frequency between grid points.
@@ -711,11 +733,9 @@ def design(nfilt: int, jtype: int, nbands: int, edges: list, gains: list, weight
     j = int(1)
     l = int(1)
     lband = int(1)
-    # TODO: Size appropriately
-    des = Vector(1045)
-    wt = Vector(1045)
     iext = IntVector(1045)
-    h = Vector(nfilt)
+    # TODO: CHECK THIS
+    h = Vector(round(nfilt / 2))
 
     # This is the iteration across the bands.  The index "l"
     # points to the current band.
@@ -776,18 +796,18 @@ def design(nfilt: int, jtype: int, nbands: int, edges: list, gains: list, weight
     # symmetry.
     if neg == 0:
         if not nodd == 1:
-            for j in range(1, ngrid + 1):
+            for j in CLOSED_RANGE(1, ngrid):
                 change = math.cos(PI * grid.get(j))
                 des.set(j, des.get(j) / change)
                 wt.set(j, wt.get(j) * change)
     else:
         if not nodd == 1:
-            for j in range(1, ngrid + 1):
+            for j in CLOSED_RANGE(1, ngrid):
                 change = math.sin(PI * grid.get(j))
                 des.set(j, des.get(j) / change)
                 wt.set(j, wt.get(j) * change)
         else:
-            for j in range(1, ngrid + 1):
+            for j in CLOSED_RANGE(1, ngrid):
                 change = math.sin(PI2 * grid.get(j))
                 des.set(j, des.get(j) / change)
                 wt.set(j, wt.get(j) * change)
@@ -849,4 +869,21 @@ def design(nfilt: int, jtype: int, nbands: int, edges: list, gains: list, weight
                 h.set(j, 0.25 * (alpha.get(nzmj) - alpha.get(nf2j)))
             h.set(nfcns, 0.5 * alpha.get(1) - 0.25 * alpha.get(2))         
 
-    return h, dev
+    # Make a complete impulse response 
+    impulse = []
+    half_size = int(nfilt / 2)
+    # Left half
+    for i in CLOSED_RANGE(1, half_size):
+        impulse.append(h.get(i))
+    # Center
+    if nodd == 1:
+        impulse.append(h.get(half_size + 1))
+    # Right half
+    for i in CLOSED_RANGE(1, half_size):
+        tap = h.get(half_size - i + 1)
+        # TODO: CHECK THIS LOGIC
+        if jtype == 2 or jtype == 3:
+            tap = -1 * tap 
+        impulse.append(tap)
+
+    return impulse, dev
