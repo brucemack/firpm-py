@@ -30,6 +30,12 @@ print("Figure 19 - N=20 Hilbert transformer")
 h, dev = firpm.design(20, 3, 1, [ 0.05, 0.5 ], [ 1.0 ], [ 1.0 ])
 print("Impulse Response", h)
 print("Dev dB", 20 * math.log10(dev))
+
+print("N=31 Hilbert transformer")
+h, dev = firpm.design(31, 3, 1, [ 0.05, 0.45 ], [ 1.0 ], [ 1.0 ])
+print("Impulse Response", h)
+print("Dev dB", 20 * math.log10(dev))
+
 """
 # Do an IFFT of this one
 y = np.fft.ifft(np.array(h))

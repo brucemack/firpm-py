@@ -658,7 +658,7 @@ def remez(ngrid: int, nfcns: int, grid: Vector, des: Vector, wt: Vector, iext: V
     # TODO: BUILD THE FINAL G(F) FOR RETURN
     return dev, alpha
 
-def design(nfilt: int, jtype: int, nbands: int, edges: list, gains: list, weights: list, lgrid = 16):
+def design(nfilt: int, jtype: int, nbands: int, edges: list, gains: list, weights: list, lgrid: int = 16):
     """
 
     General Notes:
