@@ -12,7 +12,7 @@ in order to simplify the translation process and to maintain a strong
 cross-reference to the original paper. Therefore, this will not 
 necessarily look like "good" Python code.
 
-Bruce MacKinnon
+Bruce MacKinnon (bruce at mackinnon dot com)
 """
 import math
 

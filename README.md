@@ -10,7 +10,7 @@ Validation
 ==========
 
 The results match the examples provided in the original paper with a high
-degree of accuracy. Please see [validate.py](blob/main/validate.py) for unit tests that demonstrate
+degree of accuracy. Please see [validate.py](validate.py) for unit tests that demonstrate
 matching results covering 
 all of the examples in the original paper _A Computer Program for Designing Optimum FIR Linear Phase Digital Filters_.
 
