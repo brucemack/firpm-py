@@ -669,6 +669,7 @@ def design(nfilt: int, jtype: int, nbands: int, edges: list, gains: list, weight
 
     Parameters:
         nfilt: Filter length (taps)
+        jtype: 
         nbands: Numer of bands
         edges: Pairs of frequencies defining the start and end point of each 
             band. Maximum of 10 bands allowed.
@@ -717,7 +718,7 @@ def design(nfilt: int, jtype: int, nbands: int, edges: list, gains: list, weight
         nfcns = nfcns + 1
 
     # Setup the dense grid of frequencies.
-    grid = Vector((nfilt + 1) * int(lgrid / 2))
+    grid = Vector((nfilt + 1) * int(lgrid / 2) + 1)
     des = Vector((nfilt + 1) * int(lgrid / 2))
     wt = Vector((nfilt + 1) * int(lgrid / 2))
     # Start off the grid at the lower-boundary of the first band
@@ -735,7 +736,7 @@ def design(nfilt: int, jtype: int, nbands: int, edges: list, gains: list, weight
     lband = int(1)
     iext = IntVector(1045)
     # TODO: CHECK THIS
-    h = Vector(round(nfilt / 2))
+    h = Vector(round(nfilt / 2) + 1)
 
     # This is the iteration across the bands.  The index "l"
     # points to the current band.

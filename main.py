@@ -36,7 +36,14 @@ h, dev = firpm.design(31, 3, 1, [ 0.05, 0.45 ], [ 1.0 ], [ 1.0 ])
 print("Impulse Response", h)
 print("Dev dB", 20 * math.log10(dev))
 
-"""
+print("N=9 high-pass filter for CTCSS elimination below 250/32000")
+wc0 = 200 / 32000
+wc1 = 300 / 32000
+print(wc0, wc1)
+h, dev = firpm.design(10, 1, 2, [ 0.00, wc0, wc1, 0.5 ], [ 0.0, 1.0 ], [ 1.0, 1.0 ] )
+print("Impulse Response", h)
+print("Dev dB", 20 * math.log10(dev))
+
 # Do an IFFT of this one
 y = np.fft.ifft(np.array(h))
 points = round(len(y) / 2)
@@ -48,7 +55,7 @@ for i in range(0, points):
 plt.plot(x, np.abs(y[0 : points]))
 plt.xlabel('Frequency (Hz)')
 plt.ylabel('Magnitude')
-plt.title('Parks-McClellan Filter Design - Hilbert Transformer')
+plt.title('Parks-McClellan Filter Design')
 plt.grid(True)
 plt.show()
-"""
+
