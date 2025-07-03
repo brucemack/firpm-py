@@ -38,10 +38,13 @@ fs = 8000
 print("HPF for CTCSS elimination below 250")
 wc0 = 200 / fs
 wc1 = 375 / fs
-print(wc0, wc1)
-h, dev = firpm.design(taps, 1, 2, [ 0.00, wc0, wc1, 0.5 ], [ 0.00, 1.0 ], [ 1.0, 1.0 ] )
+wc2 = 3000 / fs
+wc3 = 3175 / fs
 
-print("Impulse Response", h)
+#h, dev = firpm.design(taps, 1, 2, [ 0.00, wc0, wc1, 0.5 ], [ 0.00, 1.0 ], [ 1.0, 1.0 ] )
+h, dev = firpm.design(taps, 1, 3, [ 0.00, wc0, wc1, wc2, wc3, 0.5 ], [ 0.00, 1.0, 0.00 ], [ 1.0, 1.0, 1.0 ] )
+
+#print("Impulse Response", h)
 print("Dev dB", 20 * math.log10(dev))
 
 sampling_rate = 1  # Hz
@@ -73,20 +76,18 @@ ax.grid(True)
 plt.show()
 
 # Generate a sample signal of one second
-t = np.linspace(0, 1000, 1000, endpoint=False)
-ft = 350
-signal = np.sin((2 * np.pi * ft / fs ) *  t)
+t = np.linspace(0, fs, fs, endpoint=False)
+ft = 3300
+omega = 2 * 3.1415926 * ft / fs
+signal = np.sin(omega * t)
 
 # Apply the FIR filter
 filtered_signal = lfilter(h, [1.0], signal)
 
-print("Original signal shape:", signal.shape)
-print("Filtered signal shape:", filtered_signal.shape)
-
 fig, ax = plt.subplots()
 ax.plot(t[127:], filtered_signal[127:])
-ax.set_title('Filtered Signal')
-ax.set_xlabel('Tone Freq')
+ax.set_title('Filtered Signal (ft=' + str(ft) + ')')
+ax.set_xlabel('Tone Freq (Hz)')
 ax.set_ylabel('Magnitude')
 ax.grid(True)
 plt.show()
