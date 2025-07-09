@@ -32,9 +32,10 @@ fs = 32000
 
 # Create the high-pass filter used to measure noise
 hp_taps = 21
-hp_wc0 = 3000 / fs
-hp_wc1 = 5000 / fs
+hp_wc0 = 5000 / fs
+hp_wc1 = 7000 / fs
 hp_h, _ = firpm.design(hp_taps, 1, 2, [ 0.00, hp_wc0, hp_wc1, 0.5 ], [ 0.0, 1.0 ], [ 1.0, 1.0 ] )
+print("Noise Filter", hp_h)
 
 # Create the low-pass filter used to decimate 
 df_taps = 21

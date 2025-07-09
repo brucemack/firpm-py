@@ -38,11 +38,18 @@ print("Dev dB", 20 * math.log10(dev))
 
 print("N=9 high-pass filter for CTCSS elimination below 250/32000")
 wc0 = 200 / 32000
-wc1 = 300 / 32000
+wc1 = 375 / 32000
 print(wc0, wc1)
-h, dev = firpm.design(10, 1, 2, [ 0.00, wc0, wc1, 0.5 ], [ 0.0, 1.0 ], [ 1.0, 1.0 ] )
+h, dev = firpm.design(127, 1, 2, [ 0.00, wc0, wc1, 0.5 ], [ 0.0, 1.0 ], [ 1.0, 1.0 ] )
 print("Impulse Response", h)
 print("Dev dB", 20 * math.log10(dev))
+
+print("High-pass filter for noise detection above 5000/32000 -30dB")
+wc0 = 4000 / 32000
+wc1 = 6000 / 32000
+h, dev = firpm.design(21, 1, 2, [ 0.00, wc0, wc1, 0.5 ], [ 0.03, 1.0 ], [ 1.0, 1.0 ] )
+print("Impulse Response", h)
+#print("Dev dB", 20 * math.log10(dev)
 
 # Do an IFFT of this one
 y = np.fft.ifft(np.array(h))
